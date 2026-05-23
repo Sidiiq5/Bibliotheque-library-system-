@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Library Management System</title>
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: Arial, sans-serif;
+    }
+    body{
+      background:#f4f6f9;
+      padding:40px;
+    }
+    .container{
+      max-width:700px;
+      margin:auto;
+      background:white;
+      padding:30px;
+      border-radius:10px;
+      box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    }
+    h1{
+      text-align:center;
+      margin-bottom:25px;
+      color:#333;
+    }
+    .search-box{
+      display:flex;
+      gap:10px;
+      margin-bottom:25px;
+    }
+    .search-box input{
+      flex:1;
+      padding:12px;
+      border:2px solid #ddd;
+      border-radius:5px;
+      font-size:16px;
+    }
+    .search-box button{
+      padding:12px 20px;
+      border:none;
+      background:#007bff;
+      color:white;
+      border-radius:5px;
+      cursor:pointer;
+      font-size:16px;
+    }
+    .search-box button:hover{
+      background:#0056b3;
+    }
+    .book-list{
+      margin-top:20px;
+    }
+    .book{
+      background:#f9f9f9;
+      padding:15px;
+      border-left:5px solid #007bff;
+      margin-bottom:15px;
+      border-radius:5px;
+    }
+    .book h3{
+      color:#222;
+      margin-bottom:5px;
+    }
+    .book p{
+      color:#555;
+    }
+    .not-found{
+      text-align:center;
+      color:red;
+      font-weight:bold;
+      margin-top:20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Library Management System</h1>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search book by title...">
+      <button onclick="searchBook()">Search</button>
+    </div>
+    <div class="book-list" id="bookList"></div>
+  </div>
+  <script>
+    const books = [
+      {
+        title: "Aqoon iyo Afgarad",
+        author: "Maxamed Ibraahim Warsame (Hadraawi)"
+      },
+      {
+        title: "Dugyar",
+        author: "Xasan Daahir Ismaaciil (Weedhsame)"
+      },
+      {
+        title: "Dugsi Male Qabyaaladi",
+        author: "Cabdilahi Suldaan Maxamed (Timacadde)"
+      },
+      {
+        title: "Miisaanka Maansada",
+        author: "Maxamed Xaashi Dhamac (Gaarriye)"
+      },
+      {
+        title: "Sirta Nolosha",
+        author: "Maxamed Ibraahim Warsame (Hadraawi)"
+      }
+    ];
+    function displayBooks(bookArray) {
+      const bookList = document.getElementById("bookList");
+      if(bookArray.length === 0){
+        bookList.innerHTML = `<div class="not-found">No books found.</div>`;
+        return;
+      }
+      bookList.innerHTML = "";
+      bookArray.forEach(book => {
+        bookList.innerHTML += `
+          <div class="book">
+            <h3>${book.title}</h3>
+            <p><strong>Author:</strong> ${book.author}</p>
+          </div>
+        `;
+      });
+    }
+    function searchBook() {
+      const searchValue = document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase();
+      const filteredBooks = books.filter(book =>
+        book.title.toLowerCase().includes(searchValue)
+      );
+      displayBooks(filteredBooks);
+    }
+    // Show all books on page load
+    displayBooks(books);
+  </script>
+</body>
+</html>
