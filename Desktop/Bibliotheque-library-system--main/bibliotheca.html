@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibliotheca — Library System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --parchment: #f5efe3;
+    --cream: #fdf8f0;
+    --gold: #c9883a;
+    --gold-light: #e8b86d;
+    --rust: #8b3a2a;
+    --sage: #4a6741;
+    --muted: #8a7a65;
+    --border: rgba(201,136,58,0.2);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(201,136,58,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(139,58,42,0.05) 0%, transparent 60%);
+  }
+  header {
+    background: var(--ink);
+    color: var(--parchment);
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,136,58,0.04) 40px, rgba(201,136,58,0.04) 41px);
+  }
+  .header-inner { max-width: 1100px; margin: 0 auto; position: relative; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 2.8rem; letter-spacing: -0.02em; color: var(--gold-light); }
+  .logo-sub { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-left: 1rem; }
+  .tagline { font-size: 0.72rem; color: rgba(245,239,227,0.5); letter-spacing: 0.12em; margin-top: 0.3rem; }
+  .stats-bar { background: var(--gold); padding: 0.6rem 2rem; }
+  .stats-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap; }
+  .stat { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--ink); letter-spacing: 0.06em; }
+  .stat strong { font-weight: 500; }
+  main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+  .search-label { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; display: block; }
+  .search-wrapper { position: relative; margin-bottom: 1rem; }
+  .search-icon { position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 1rem; }
+  #searchInput {
+    width: 100%;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 0.85rem 1rem 0.85rem 2.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #searchInput:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,136,58,0.12); }
+  #searchInput::placeholder { color: var(--muted); opacity: 0.7; }
+  .filters { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .filter-btn {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .filter-btn.active { background: var(--ink); border-color: var(--ink); color: var(--gold-light); }
+  .results-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.72rem; color: var(--muted); }
+  .results-count { color: var(--ink); font-weight: 500; }
+  #sortSelect {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.3rem 0.6rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    cursor: pointer;
+    outline: none;
+  }
+  .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.4rem; }
+  .book-card {
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 1.4rem 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.35s ease both;
+  }
+  .book-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gold);
+    transform: scaleY(0);
+    transition: transform 0.2s;
+    transform-origin: bottom;
+  }
+  .book-card:hover { transform: translateY(-3px); box-shadow: 0 4px 24px rgba(26,18,8,0.12), 0 1px 4px rgba(26,18,8,0.08); border-color: rgba(201,136,58,0.4); }
+  .book-card:hover::before { transform: scaleY(1); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; line-height: 1.3; color: var(--ink); }
+  .sbadge { flex-shrink: 0; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.55rem; border-radius: 2px; font-weight: 500; }
+  .s-avail { background: rgba(74,103,65,0.12); color: var(--sage); border: 1px solid rgba(74,103,65,0.25); }
+  .s-out   { background: rgba(139,58,42,0.1);  color: var(--rust); border: 1px solid rgba(139,58,42,0.2); }
+  .s-res   { background: rgba(201,136,58,0.12); color: #7a5a1e; border: 1px solid rgba(201,136,58,0.3); }
+  .card-author { font-size: 0.78rem; color: var(--muted); font-style: italic; margin-bottom: 0.8rem; }
+  .card-metas { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; margin-bottom: 0.7rem; }
+  .card-meta { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.04em; }
+  .genre-pill { display: inline-block; background: rgba(26,18,8,0.06); border: 1px solid rgba(26,18,8,0.1); border-radius: 2px; padding: 0.2rem 0.5rem; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .card-rating { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+  .stars { color: var(--gold); font-size: 0.75rem; letter-spacing: 0.05em; }
+  .rnum { font-size: 0.7rem; color: var(--muted); }
+  .no-results { grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .no-results-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+  .no-results h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .no-results p { font-size: 0.78rem; opacity: 0.7; }
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,18,8,0.65);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 2.5rem;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-close { position: absolute; top: 1.2rem; right: 1.2rem; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: var(--muted); line-height: 1; transition: color 0.15s; }
+  .modal-close:hover { color: var(--ink); }
+  .modal-genre { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; display: block; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.9rem; line-height: 1.2; margin-bottom: 0.3rem; }
+  .modal-author { font-size: 0.85rem; color: var(--muted); font-style: italic; margin-bottom: 1.5rem; }
+  .modal-hr { border: none; border-top: 1px solid var(--border); margin: 1.4rem 0; }
+  .modal-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem 1.5rem; margin-bottom: 1.2rem; }
+  .detail-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.2rem; }
+  .detail-val { font-size: 0.82rem; color: var(--ink); }
+  .modal-desc { font-size: 0.82rem; line-height: 1.7; color: #4a3e2c; margin-bottom: 1.5rem; }
+  .modal-btn {
+    background: var(--ink);
+    color: var(--gold-light);
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 1.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.18s;
+    width: 100%;
+  }
+  .modal-btn:hover { background: #2e2414; }
+  .modal-btn:disabled { background: rgba(26,18,8,0.1); color: var(--muted); cursor: not-allowed; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(201,136,58,0.35); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <span class="logo">Bibliotheca</span>
+      <span class="logo-sub">Library System</span>
+    </div>
+    <p class="tagline">Search · Discover · Reserve</p>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat">📚 <strong id="sTot">0</strong>&nbsp;total books</div>
+    <div class="stat">✅ <strong id="sAvail">0</strong>&nbsp;available</div>
+    <div class="stat">📖 <strong id="sOut">0</strong>&nbsp;checked out</div>
+    <div class="stat">🔖 <strong id="sRes">0</strong>&nbsp;reserved</div>
+  </div>
+</div>
+
+<main>
+  <div class="search-section" style="margin-bottom:1.5rem">
+    <label class="search-label">Search the collection</label>
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Title, author, ISBN, genre…" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="results-row">
+    <span><span class="results-count" id="rCount">0</span> books found</span>
+    <select id="sortSelect">
+      <option value="title">Sort: Title A–Z</option>
+      <option value="author">Sort: Author</option>
+      <option value="year">Sort: Year</option>
+      <option value="rating">Sort: Rating</option>
+    </select>
+  </div>
+
+  <div class="book-grid" id="grid"></div>
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" id="mClose">✕</button>
+    <span class="modal-genre" id="mGenre"></span>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-author" id="mAuthor"></div>
+    <hr class="modal-hr">
+    <div class="modal-details">
+      <div><span class="detail-label">ISBN</span><span class="detail-val" id="mIsbn"></span></div>
+      <div><span class="detail-label">Year</span><span class="detail-val" id="mYear"></span></div>
+      <div><span class="detail-label">Pages</span><span class="detail-val" id="mPages"></span></div>
+      <div><span class="detail-label">Status</span><span class="detail-val" id="mStatus"></span></div>
+      <div><span class="detail-label">Location</span><span class="detail-val" id="mLoc"></span></div>
+      <div><span class="detail-label">Rating</span><span class="detail-val" id="mRat"></span></div>
+    </div>
+    <hr class="modal-hr">
+    <div class="modal-desc" id="mDesc"></div>
+    <button class="modal-btn" id="mBtn"></button>
+  </div>
+</div>
+
+<script>
+const BOOKS = [
+  { id:1,  title:"The Name of the Wind",                      author:"Patrick Rothfuss",          genre:"Fantasy",          year:2007, pages:662, isbn:"978-0-7564-0305-1", status:"available", location:"Shelf A-3", rating:4.5, description:"A young man grows to be one of the most notorious magicians his world has ever seen — told through his own gripping words in a three-day confession." },
+  { id:2,  title:"Project Hail Mary",                         author:"Andy Weir",                 genre:"Sci-Fi",           year:2021, pages:476, isbn:"978-0-593-13520-4", status:"checked",   location:"Shelf B-1", rating:4.7, description:"A lone astronaut must save the earth from catastrophe — and discovers he is not alone in his mission across the cosmos." },
+  { id:3,  title:"Pachinko",                                  author:"Min Jin Lee",               genre:"Historical Fiction",year:2017, pages:496, isbn:"978-1-4555-6397-1", status:"available", location:"Shelf C-2", rating:4.4, description:"An epic saga of a Korean family who immigrate to Japan in the early 1900s, spanning generations of sacrifice, ambition, and love." },
+  { id:4,  title:"Klara and the Sun",                         author:"Kazuo Ishiguro",            genre:"Literary Fiction", year:2021, pages:307, isbn:"978-0-571-36484-2", status:"reserved",  location:"Shelf D-1", rating:4.1, description:"An Artificial Friend with acute observational powers carefully watches the outside world and the humans who may come to adopt her." },
+  { id:5,  title:"The Midnight Library",                      author:"Matt Haig",                 genre:"Fiction",          year:2020, pages:304, isbn:"978-0-525-55947-4", status:"available", location:"Shelf C-4", rating:4.2, description:"A library beyond the edge of the universe that lets you try out all the lives you could have lived — if you could only choose." },
+  { id:6,  title:"Dune",                                      author:"Frank Herbert",             genre:"Sci-Fi",           year:1965, pages:688, isbn:"978-0-441-17271-9", status:"available", location:"Shelf B-2", rating:4.6, description:"The sweeping tale of a desert planet, a noble family's fall from grace, and one boy's destiny to become a legendary leader." },
+  { id:7,  title:"Sapiens",                                   author:"Yuval Noah Harari",         genre:"Non-Fiction",      year:2011, pages:443, isbn:"978-0-06-231609-7", status:"checked",   location:"Shelf F-1", rating:4.4, description:"A brief history of humankind — from the Stone Age to the 21st century — exploring how biology and history have shaped us." },
+  { id:8,  title:"The Bell Jar",                              author:"Sylvia Plath",              genre:"Classic",          year:1963, pages:244, isbn:"978-0-06-153770-0", status:"available", location:"Shelf E-2", rating:4.3, description:"Esther Greenwood's harrowing descent into mental illness and her struggle to find her identity in 1950s America." },
+  { id:9,  title:"Tomorrow, and Tomorrow, and Tomorrow",       author:"Gabrielle Zevin",           genre:"Fiction",          year:2022, pages:416, isbn:"978-0-593-32120-2", status:"available", location:"Shelf C-5", rating:4.6, description:"A profound story about friendship and creative collaboration between two video-game designers over three decades." },
+  { id:10, title:"The Hitchhiker's Guide to the Galaxy",       author:"Douglas Adams",             genre:"Sci-Fi",           year:1979, pages:193, isbn:"978-0-345-39180-3", status:"checked",   location:"Shelf B-4", rating:4.5, description:"Moments before Earth is demolished for a hyperspace bypass, Arthur Dent is whisked off into a mad galaxy." },
+  { id:11, title:"Normal People",                             author:"Sally Rooney",              genre:"Fiction",          year:2018, pages:273, isbn:"978-0-571-33489-0", status:"reserved",  location:"Shelf C-1", rating:4.0, description:"A tender, funny, deeply humane novel about two people who fall in and out of each other's lives across university years." },
+  { id:12, title:"A Gentleman in Moscow",                     author:"Amor Towles",               genre:"Historical Fiction",year:2016, pages:462, isbn:"978-0-670-02637-7", status:"available", location:"Shelf D-3", rating:4.5, description:"A former count is sentenced to house arrest in the Metropol hotel in Moscow — where he befriends a cast of extraordinary characters." },
+  { id:13, title:"The Alchemist",                             author:"Paulo Coelho",              genre:"Fiction",          year:1988, pages:197, isbn:"978-0-06-112241-5", status:"available", location:"Shelf C-3", rating:3.9, description:"A young Andalusian shepherd journeys from Spain to Egypt in search of treasure and discovers a universal truth." },
+  { id:14, title:"Atomic Habits",                             author:"James Clear",               genre:"Non-Fiction",      year:2018, pages:320, isbn:"978-0-7352-1129-2", status:"checked",   location:"Shelf F-3", rating:4.6, description:"An easy and proven way to build good habits and break bad ones — a framework for transforming your life one tiny change at a time." },
+  { id:15, title:"Crime and Punishment",                      author:"Fyodor Dostoevsky",         genre:"Classic",          year:1866, pages:671, isbn:"978-0-14-044913-6", status:"available", location:"Shelf E-1", rating:4.4, description:"A destitute student in St. Petersburg murders a pawnbroker and is consumed by the guilt and psychological torment that follow." },
+  { id:16, title:"The Pragmatic Programmer",                  author:"David Thomas & Andrew Hunt", genre:"Technology",       year:2019, pages:352, isbn:"978-0-13-595705-9", status:"available", location:"Shelf G-1", rating:4.5, description:"From journeyman to master — timeless advice on building your software craft through pragmatic thinking and adaptable practices." },
+  { id:17, title:"The Seven Husbands of Evelyn Hugo",         author:"Taylor Jenkins Reid",       genre:"Fiction",          year:2017, pages:400, isbn:"978-1-5011-6977-6", status:"reserved",  location:"Shelf C-6", rating:4.5, description:"A reclusive Hollywood legend finally tells the truth about her glamorous and scandalous life to an unknown journalist." },
+  { id:18, title:"Invisible Man",                             author:"Ralph Ellison",             genre:"Classic",          year:1952, pages:581, isbn:"978-0-679-72313-5", status:"available", location:"Shelf E-3", rating:4.3, description:"A Black man's experiences navigating a society that refuses to see him — a definitive novel of 20th-century American literature." },
+  { id:19, title:"Thinking, Fast and Slow",                   author:"Daniel Kahneman",           genre:"Non-Fiction",      year:2011, pages:499, isbn:"978-0-374-27563-1", status:"checked",   location:"Shelf F-2", rating:4.3, description:"Nobel laureate Kahneman maps the two systems of thinking that drive the way we make choices — fast, intuitive thinking vs. slow, logical thought." },
+  { id:20, title:"The Design of Everyday Things",             author:"Don Norman",               genre:"Technology",        year:1988, pages:368, isbn:"978-0-465-06710-7", status:"available", location:"Shelf G-2", rating:4.4, description:"A powerful primer on how design serves — or fails — the humans who must use it, from doors to digital interfaces." }
+];
+
+const genres = ["All", ...new Set(BOOKS.map(b => b.genre))];
+let activeGenre = "All", searchQ = "", sortBy = "title";
+
+function stars(r) {
+  const full = Math.floor(r), half = r % 1 >= 0.5 ? 1 : 0;
+  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(5 - full - half);
+}
+function statusClass(s) { return s === "available" ? "s-avail" : s === "checked" ? "s-out" : "s-res"; }
+function statusLabel(s) { return s === "available" ? "Available" : s === "checked" ? "Checked Out" : "Reserved"; }
+
+function getFiltered() {
+  let list = BOOKS.filter(b => {
+    const g = activeGenre === "All" || b.genre === activeGenre;
+    const q = !searchQ || [b.title, b.author, b.isbn, b.genre].some(f => f.toLowerCase().includes(searchQ));
+    return g && q;
+  });
+  list.sort((a, b) => {
+    if (sortBy === "title")  return a.title.localeCompare(b.title);
+    if (sortBy === "author") return a.author.localeCompare(b.author);
+    if (sortBy === "year")   return b.year - a.year;
+    if (sortBy === "rating") return b.rating - a.rating;
+  });
+  return list;
+}
+
+function updateStats() {
+  document.getElementById("sTot").textContent   = BOOKS.length;
+  document.getElementById("sAvail").textContent = BOOKS.filter(b => b.status === "available").length;
+  document.getElementById("sOut").textContent   = BOOKS.filter(b => b.status === "checked").length;
+  document.getElementById("sRes").textContent   = BOOKS.filter(b => b.status === "reserved").length;
+}
+
+function renderFilters() {
+  const el = document.getElementById("filters");
+  el.innerHTML = genres.map(g =>
+    `<button class="filter-btn${g === activeGenre ? " active" : ""}" data-g="${g}">${g}</button>`
+  ).join("");
+  el.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => {
+    activeGenre = b.dataset.g; renderFilters(); renderGrid();
+  }));
+}
+
+function renderGrid() {
+  const list = getFiltered();
+  document.getElementById("rCount").textContent = list.length;
+  const grid = document.getElementById("grid");
+  if (!list.length) {
+    grid.innerHTML = `<div class="no-results"><div class="no-results-icon">📚</div><h3>Nothing found</h3><p>Try a different search or filter.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(b => `
+    <div class="book-card" data-id="${b.id}">
+      <div class="card-head">
+        <div class="card-title">${b.title}</div>
+        <div class="sbadge ${statusClass(b.status)}">${statusLabel(b.status)}</div>
+      </div>
+      <div class="card-author">${b.author}</div>
+      <div class="card-metas">
+        <span class="card-meta">📅 ${b.year}</span>
+        <span class="card-meta">📄 ${b.pages}pp</span>
+        <span class="card-meta">📍 ${b.location}</span>
+      </div>
+      <span class="genre-pill">${b.genre}</span>
+      <div class="card-rating">
+        <span class="stars">${stars(b.rating)}</span>
+        <span class="rnum">${b.rating.toFixed(1)}</span>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".book-card").forEach(c =>
+    c.addEventListener("click", () => openModal(+c.dataset.id))
+  );
+}
+
+let currentBook = null;
+function openModal(id) {
+  const b = BOOKS.find(x => x.id === id);
+  if (!b) return;
+  currentBook = b;
+  document.getElementById("mGenre").textContent  = b.genre;
+  document.getElementById("mTitle").textContent  = b.title;
+  document.getElementById("mAuthor").textContent = b.author;
+  document.getElementById("mIsbn").textContent   = b.isbn;
+  document.getElementById("mYear").textContent   = b.year;
+  document.getElementById("mPages").textContent  = b.pages + " pages";
+  document.getElementById("mStatus").textContent = statusLabel(b.status);
+  document.getElementById("mLoc").textContent    = b.location;
+  document.getElementById("mRat").textContent    = stars(b.rating) + "  " + b.rating.toFixed(1);
+  document.getElementById("mDesc").textContent   = b.description;
+  const btn = document.getElementById("mBtn");
+  if (b.status === "available") { btn.textContent = "Reserve this Book"; btn.disabled = false; }
+  else if (b.status === "reserved") { btn.textContent = "Already Reserved"; btn.disabled = true; }
+  else { btn.textContent = "Join Waitlist"; btn.disabled = false; }
+  document.getElementById("modal").classList.add("open");
+}
+
+document.getElementById("mClose").addEventListener("click", () =>
+  document.getElementById("modal").classList.remove("open")
+);
+document.getElementById("modal").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal"))
+    document.getElementById("modal").classList.remove("open");
+});
+document.getElementById("mBtn").addEventListener("click", () => {
+  if (!currentBook || currentBook.status !== "available") return;
+  currentBook.status = "reserved";
+  updateStats(); renderGrid();
+  document.getElementById("modal").classList.remove("open");
+});
+document.getElementById("searchInput").addEventListener("input", e => {
+  searchQ = e.target.value.toLowerCase().trim(); renderGrid();
+});
+document.getElementById("sortSelect").addEventListener("change", e => {
+  sortBy = e.target.value; renderGrid();
+});
+
+updateStats(); renderFilters(); renderGrid();
+</script>
+</body>
+</html>
